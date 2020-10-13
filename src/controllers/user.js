@@ -15,3 +15,18 @@ exports.getUsers = async (req, res) => {
         console.log(error);
     }
 };
+
+exports.deleteUser = async (req, res) => {
+    const { id } = req.params;
+    const deletedUser = await User.destroy({
+        where: {
+            id,
+        },
+    });
+    res.send({
+        message: "Successfuly delete user",
+        data: {
+            id: `${deletedUser.id}`,
+        },
+    });
+};
