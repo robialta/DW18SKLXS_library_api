@@ -16,6 +16,7 @@ const {
     detailBook,
     addBook,
     updateBook,
+    deleteBook,
 } = require("../controllers/book");
 const { up } = require("../../migrations/20201014064510-create-book");
 
@@ -33,6 +34,7 @@ router.get("/books", authenticated, getBooks);
 router.get("/book/:id", authenticated, detailBook);
 router.post("/book", authenticated, addBook);
 router.patch("/book/:id", authenticated, updateBook);
+router.delete("/book/:id", authenticated, deleteBook);
 
 // Authentication
 router.post("/register", register);

@@ -133,3 +133,25 @@ exports.updateBook = async (req, res) => {
         });
     }
 };
+
+exports.deleteBook = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletedBook = await Book.destroy({
+            where: {
+                id,
+            },
+        });
+        res.send({
+            message: "Successfully deleting book",
+            data: {
+                id,
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        res.send({
+            message: `Error deleting book ${error}`,
+        });
+    }
+};
