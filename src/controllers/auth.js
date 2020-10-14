@@ -1,51 +1,70 @@
 const { User } = require("../../models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const joi = require("@hapi/joi");
 const key = "koderahasia";
-
-exports.register = async (req, res) => {
-    try {
-        const saveedUser = await User.create({
-            name: req.body.name,
-            email: req.body.email,
-            password: req.body.password,
-        });
-        console.log(req.body);
-        const token = await jwt.sign(
-            {
-                id: saveedUser.id,
-            },
-            key
-        );
-        res.send({
-            message: "User added",
-            token: token,
-        });
-    } catch (error) {
-        console.log(error);
-    }
-};
 
 exports.login = async (req, res) => {
     try {
-        const body = req.body;
-        const getUser = await User.findOne({
+        const { email, password } = req.body;
+
+        const schema = joi.object({
+            email: joi.string().email().min(10).required(),
+            password: joi.string().min(6).required(),
+        });
+
+        const { error } = schema.validate(req.body);
+
+        if (error) {
+            return res.status(400).send({
+                error: {
+                    message: error.details[0].message,
+                },
+            });
+        }
+
+        const user = await User.findOne({
             where: {
-                email: body.email,
+                email,
             },
         });
-        const token = await jwt.sign(
+
+        if (!user) {
+            return res.status(400).send({
+                error: {
+                    message: "Email not existed",
+                },
+            });
+        }
+
+        const validPassword = await bcrypt.compare(password, user.password);
+
+        if (!validPassword) {
+            return res.status(400).send({
+                error: {
+                    message: "Email or password invalid",
+                },
+            });
+        }
+
+        const token = jwt.sign(
             {
-                id: getUser.id,
+                id: user.id,
             },
             key
         );
 
         res.send({
-            message: " Success",
-            token: token,
+            message: "Login Success",
+            data: {
+                email: user.email,
+                token,
+            },
         });
-    } catch (error) {
-        console.log(error);
+    } catch (err) {
+        console.log(err);
+        res.send({
+            message: `Login Failed ${err}`,
+        });
     }
 };
