@@ -17,16 +17,23 @@ exports.getUsers = async (req, res) => {
 };
 
 exports.deleteUser = async (req, res) => {
-    const { id } = req.params;
-    const deletedUser = await User.destroy({
-        where: {
-            id,
-        },
-    });
-    res.send({
-        message: "Successfuly delete user",
-        data: {
-            id: `${deletedUser.id}`,
-        },
-    });
+    try {
+        const { id } = req.params;
+        const deletedUser = await User.destroy({
+            where: {
+                id,
+            },
+        });
+        res.send({
+            message: "Successfuly delete user",
+            data: {
+                id: `${deletedUser.id}`,
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        res.send({
+            message: "Error deleting user",
+        });
+    }
 };
