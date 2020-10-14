@@ -1,9 +1,9 @@
-const { User } = require("../../models");
+const { User, Book } = require("../../models");
 
 exports.getUsers = async (req, res) => {
     try {
         const users = await User.findAll({
-            attributes: { exclude: ["type", "createdAt", "updatedAt"] },
+            attributes: { exclude: ["createdAt", "updatedAt"] },
         });
         res.send({
             message: "Successfully Get All Users",
