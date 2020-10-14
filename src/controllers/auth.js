@@ -5,21 +5,21 @@ const key = "koderahasia";
 
 exports.register = async (req, res) => {
     try {
-        const saveedUser = await User.create({
-            name: req.body.name,
-            email: req.body.email,
-            password: req.body.password,
-        });
-        console.log(req.body);
+        const body = req.body;
+        body.type = "basic";
+        const savedUser = await User.create(body);
         const token = await jwt.sign(
             {
-                id: saveedUser.id,
+                id: savedUser.id,
             },
             key
         );
         res.send({
-            message: "User added",
-            token: token,
+            message: "Successfully added new user",
+            data: {
+                email: savedUser.email,
+                token: token,
+            },
         });
     } catch (error) {
         console.log(error);
