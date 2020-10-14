@@ -3,49 +3,118 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const key = "koderahasia";
 
-exports.register = async (req, res) => {
+exports.login = async (req, res) => {
     try {
-        const body = req.body;
-        body.type = "basic";
-        const savedUser = await User.create(body);
-        const token = await jwt.sign(
+        const { email, password } = req.body;
+
+        const schema = joi.object({
+            email: joi.string().email().min(10).required(),
+            password: joi.string().min(8).required(),
+        });
+
+        const { error } = schema.validate(req.body);
+
+        if (error) {
+            return res.status(400).send({
+                error: {
+                    message: error.details[0].message,
+                },
+            });
+        }
+
+        const user = await User.findOne({
+            where: {
+                email,
+            },
+        });
+
+        if (!user) {
+            return res.status(400).send({
+                error: {
+                    message: "Email not existed",
+                },
+            });
+        }
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) {
+            return res.status(400).send({
+                error: {
+                    message: "Email or password invalid",
+                },
+            });
+        }
+        const token = jwt.sign(
             {
-                id: savedUser.id,
+                id: user.id,
             },
             key
         );
+
         res.send({
-            message: "Successfully added new user",
+            message: "Login Success",
             data: {
-                email: savedUser.email,
-                token: token,
+                email: user.email,
+                fullName: user.fullName,
+                token,
             },
         });
-    } catch (error) {
-        console.log(error);
+    } catch (err) {
+        console.log(err);
     }
 };
 
-exports.login = async (req, res) => {
+exports.register = async (req, res) => {
     try {
-        const body = req.body;
-        const getUser = await User.findOne({
+        const { fullName, email, password, phone, address, gender } = req.body;
+
+        const checkEmail = await User.findOne({
             where: {
-                email: body.email,
+                email,
             },
         });
-        const token = await jwt.sign(
+
+        if (checkEmail) {
+            return res.status(400).send({
+                error: {
+                    message: "Email already been existed",
+                },
+            });
+        }
+
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        const user = await User.create({
+            fullName,
+            email,
+            address,
+            gender,
+            phone,
+            type: "basic",
+            password: hashedPassword,
+        });
+
+        const token = jwt.sign(
             {
-                id: getUser.id,
+                id: user.id,
             },
             key
         );
 
         res.send({
-            message: " Success",
-            token: token,
+            message: "You has been registered",
+            data: {
+                email: user.email,
+                token,
+            },
         });
-    } catch (error) {
-        console.log(error);
+    } catch (err) {
+        console.log(err);
+
+        res.status(500).send({
+            error: {
+                message: "Server ERROR",
+            },
+        });
     }
 };
